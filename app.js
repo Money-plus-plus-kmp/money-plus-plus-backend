@@ -1,11 +1,11 @@
 import express from 'express';
-import {PORT} from './config/env.js';
+import {PORT, NODE_ENV} from './config/env.js';
 import connectToDatabase from "./database/mongodb.js";
 
 const app = express();
 
 app.get('/', (req, res) => {
-    res.send("Welcome To Money++ Backend Server 💵💵")
+    res.send(`Welcome To Money++ Backend Server on ${NODE_ENV}💵💵`)
 });
 
 app.listen(PORT, async () => {
