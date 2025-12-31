@@ -5,7 +5,7 @@ import connectToDatabase from "./database/mongodb.js";
 const app = express();
 
 app.get('/', (req, res) => {
-    res.send(`Welcome To Money++ Backend Server on ${NODE_ENV}💵💵`)
+    res.send(`Welcome To 💵💵++ Backend Server on ${NODE_ENV} environment `)
 });
 
 app.listen(PORT, async () => {
