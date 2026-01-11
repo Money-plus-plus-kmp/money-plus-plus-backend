@@ -1,14 +1,13 @@
 import mongoose from "mongoose"
 import User from "../models/user.model.js"
+import UserToken from "../models/userToken.model.js"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
-import { JWT_SECRET, JWT_EXPIRES_IN } from "../config/env.js"
+import { JWT_EXPIRES_IN, JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, JWT_REFRESH_EXPIRES_IN } from "../config/env.js"
 
 export const signUp = async (req, res, next) => {
     const session = await mongoose.startSession()
     session.startTransaction()
-
-    console.log('Request Body:', req.body)
 
     try {
         const {
@@ -41,7 +40,7 @@ export const signUp = async (req, res, next) => {
         const salt = await bcrypt.genSalt(10)
         const hashedPassword = await bcrypt.hash(password, salt)
 
-        const newUser = await User.create([{
+        const [newUser] = await User.create([{
             name: name,
             email: email,
             password: hashedPassword,
@@ -52,26 +51,46 @@ export const signUp = async (req, res, next) => {
             categories: categories,
         }], { session })
 
-        const token = jwt.sign(
-            { userId: newUser[0]._id },
-            JWT_SECRET,
-            { expiresIn: JWT_EXPIRES_IN }
-        )
+        const { accessToken, refreshToken } = await generateTokens(newUser);
 
         await session.commitTransaction()
         session.endSession()
+
+        const userResponse = newUser.toObject();
+        delete userResponse.password;
 
         res.status(201).json({
             success: true,
             message: 'User created successfully',
             data: {
-                token,
-                user: newUser[0],
+                accessToken,
+                refreshToken,
+                user: userResponse,
             },
         })
     } catch (error) {
         await session.abortTransaction()
+        session.endSession()
         next(error)
     }
 
+}
+
+export const generateTokens = async (user) => {
+    const userId = { _id: user._id };
+    const accessToken = jwt.sign(
+        userId,
+        JWT_ACCESS_SECRET,
+        { expiresIn: JWT_EXPIRES_IN }
+    );
+    const refreshToken = jwt.sign(
+        userId,
+        JWT_REFRESH_SECRET,
+        { expiresIn: JWT_REFRESH_EXPIRES_IN }
+    );
+
+    const userToken = await UserToken.findOneAndDelete({ userId: user._id });
+
+    await new UserToken({ userId: user._id, token: refreshToken }).save();
+    return { accessToken, refreshToken };
 }
