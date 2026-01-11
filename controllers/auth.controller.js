@@ -1,9 +1,8 @@
 import mongoose from "mongoose"
 import User from "../models/user.model.js"
-import UserToken from "../models/userToken.model.js"
 import bcrypt from "bcryptjs"
-import jwt from "jsonwebtoken"
-import { JWT_EXPIRES_IN, JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, JWT_REFRESH_EXPIRES_IN } from "../config/env.js"
+import { throwError } from "../utils/errorHandle.js"
+import { createTokens, saveRefreshToken } from "./token.controller.js"
 
 export const signUp = async (req, res, next) => {
     const session = await mongoose.startSession()
@@ -21,24 +20,15 @@ export const signUp = async (req, res, next) => {
             categories,
         } = req.body
 
-        if (!password || password.length < 8) {
-            return res.status(400).json({
-                success: false,
-                message: 'Password must be at least 8 characters long'
-            });
-        }
+        if (!password || password.trim().length < 8) throwError(400, 'Password must be at least 8 characters long')
 
+        if (!salary || salary < 0) throwError(400, 'Salary must be a positive number')
 
-        const existingUser = await User.findOne({ email })
+        const existingUser = await User.findOne({ email }).session(session)
 
-        if (existingUser) {
-            const error = new Error('User already exists')
-            error.statusCode = 409
-            throw error
-        }
+        if (existingUser) throwError(409, 'User already exists')
 
-        const salt = await bcrypt.genSalt(10)
-        const hashedPassword = await bcrypt.hash(password, salt)
+        const hashedPassword = await generateHashedPassword(password)
 
         const [newUser] = await User.create([{
             name: name,
@@ -51,10 +41,10 @@ export const signUp = async (req, res, next) => {
             categories: categories,
         }], { session })
 
-        const { accessToken, refreshToken } = await generateTokens(newUser);
+        const { accessToken, refreshToken } = await createTokens(newUser._id)
+        await saveRefreshToken(newUser._id, refreshToken, session)
 
         await session.commitTransaction()
-        session.endSession()
 
         const userResponse = newUser.toObject();
         delete userResponse.password;
@@ -70,27 +60,14 @@ export const signUp = async (req, res, next) => {
         })
     } catch (error) {
         await session.abortTransaction()
-        session.endSession()
         next(error)
+    } finally {
+        session.endSession();
     }
-
 }
 
-export const generateTokens = async (user) => {
-    const userId = { _id: user._id };
-    const accessToken = jwt.sign(
-        userId,
-        JWT_ACCESS_SECRET,
-        { expiresIn: JWT_EXPIRES_IN }
-    );
-    const refreshToken = jwt.sign(
-        userId,
-        JWT_REFRESH_SECRET,
-        { expiresIn: JWT_REFRESH_EXPIRES_IN }
-    );
-
-    const userToken = await UserToken.findOneAndDelete({ userId: user._id });
-
-    await new UserToken({ userId: user._id, token: refreshToken }).save();
-    return { accessToken, refreshToken };
+async function generateHashedPassword(password) {
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
+    return hashedPassword
 }
