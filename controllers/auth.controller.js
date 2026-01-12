@@ -5,6 +5,7 @@ import { throwError } from "../utils/errorHandle.js"
 import { createTokens, saveRefreshToken } from "./token.controller.js"
 
 export const signUp = async (req, res, next) => {
+    if (!req.body) throwError(400, 'Should provide user data')
     const session = await mongoose.startSession()
     session.startTransaction()
 
@@ -49,8 +50,9 @@ export const signUp = async (req, res, next) => {
         const userResponse = newUser.toObject();
         delete userResponse.password;
 
-        res.status(201).json({
-            success: true,
+        const code = 201
+        res.status(code).json({
+            code: code,
             message: 'User created successfully',
             data: {
                 accessToken,
