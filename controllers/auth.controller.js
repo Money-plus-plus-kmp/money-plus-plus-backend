@@ -50,9 +50,8 @@ export const signUp = async (req, res, next) => {
         const userResponse = newUser.toObject();
         delete userResponse.password;
 
-        const code = 201
-        res.status(code).json({
-            code: code,
+        res.status(201).json({
+            code: 201,
             message: 'User created successfully',
             data: {
                 accessToken,
