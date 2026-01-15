@@ -27,7 +27,7 @@ export const signUp = async (req, res, next) => {
 
         const existingUser = await User.findOne({ email }).session(session)
 
-        if (existingUser) throwError(409, 'User already exists')
+        if (existingUser) throwError(409, 'Email already used by another account')
 
         const hashedPassword = await generateHashedPassword(password)
 

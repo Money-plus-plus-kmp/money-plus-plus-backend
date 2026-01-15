@@ -13,10 +13,6 @@ app.use('/api/v1/auth/', authRouter)
 
 app.use(errorMiddleware)
 
-app.get('/', (req, res) => {
-    res.send(`Welcome To 💵💵++ Backend Server on ${NODE_ENV} environment `)
-});
-
 app.listen(PORT, async () => {
     console.log(`App listening on http://localhost:${PORT}`);
 
