@@ -1,15 +1,12 @@
-import mongoose from "mongoose"
 import User from "../models/user.model.js"
 import bcrypt from "bcryptjs"
-import { throwError } from "../utils/errorHandle.js"
-import { createTokens, saveRefreshToken } from "./token.controller.js"
+import {throwError} from "../utils/errorHandle.js"
+import {createTokens, saveRefreshToken} from "./token.controller.js"
+import {connectToDatabase} from "../database/mongodb.js";
 
 export const signUp = async (req, res, next) => {
-    if (!req.body) throwError(400, 'Should provide user data')
-    const session = await mongoose.startSession()
-    session.startTransaction()
-
     try {
+        await connectToDatabase();
         const {
             name,
             email,
@@ -19,56 +16,59 @@ export const signUp = async (req, res, next) => {
             salaryDay,
             currentBalance,
             categories,
-        } = req.body
+        } = req.body || {};
 
-        if (!password || password.trim().length < 8) throwError(400, 'Password must be at least 8 characters long')
+        if (!email || !password) {
+            throwError(400, "Email and password are required");
+        }
 
-        if (!salary || salary < 0) throwError(400, 'Salary must be a positive number')
+        if (password.trim().length < 8) {
+            throwError(400, "Password must be at least 8 characters long");
+        }
 
-        const existingUser = await User.findOne({ email }).session(session)
+        if (salary == null || salary < 0) {
+            throwError(400, "Salary must be a positive number");
+        }
 
-        if (existingUser) throwError(409, 'Email already used by another account')
+        const existingUser = await User.findOne({ email }).lean();
+        if (existingUser) {
+            throwError(409, "Email already used by another account");
+        }
 
-        const hashedPassword = await generateHashedPassword(password)
+        const hashedPassword = await generateHashedPassword(password);
 
-        const [newUser] = await User.create([{
-            name: name,
-            email: email,
+        const newUser = await User.create({
+            name,
+            email,
             password: hashedPassword,
-            currencyId: currencyId,
-            salary: salary,
-            salaryDay: salaryDay,
-            currentBalance: currentBalance,
-            categories: categories,
-        }], { session })
+            currencyId,
+            salary,
+            salaryDay,
+            currentBalance,
+            categories,
+        });
 
-        const { accessToken, refreshToken } = await createTokens(newUser._id)
-        await saveRefreshToken(newUser._id, refreshToken, session)
-
-        await session.commitTransaction()
+        const { accessToken, refreshToken } = await createTokens(newUser._id);
+        await saveRefreshToken(newUser._id, refreshToken);
 
         const userResponse = newUser.toObject();
         delete userResponse.password;
 
-        res.status(201).json({
+        return res.status(201).json({
             code: 201,
-            message: 'User created successfully',
+            message: "User created successfully",
             data: {
                 accessToken,
                 refreshToken,
                 user: userResponse,
             },
-        })
+        });
     } catch (error) {
-        await session.abortTransaction()
-        next(error)
-    } finally {
-        session.endSession();
+        next(error);
     }
-}
+};
 
 async function generateHashedPassword(password) {
     const salt = await bcrypt.genSalt(10)
-    const hashedPassword = await bcrypt.hash(password, salt)
-    return hashedPassword
+    return await bcrypt.hash(password, salt)
 }
