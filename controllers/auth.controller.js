@@ -68,6 +68,46 @@ export const signUp = async (req, res, next) => {
     }
 };
 
+export const login = async (req, res, next) => {
+    try {
+        await connectToDatabase();
+        if (!req.body) throwError(400, 'Should provide login data')
+
+        const { email, password } = req.body
+
+        if (!email || !password) {
+            throwError(400, 'Email and password are required')
+        }
+
+        const user = await User.findOne({ email }).select('+password')
+
+        if (!user) {
+            throwError(401, 'Invalid email or password')
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password)
+
+        if (!isPasswordValid) {
+            throwError(401, 'Invalid email or password')
+        }
+
+        const { accessToken, refreshToken } = await createTokens(user._id)
+
+        await saveRefreshToken(user._id, refreshToken)
+
+        res.status(200).json({
+            code: 200,
+            message: 'Login successful',
+            data: {
+                accessToken,
+                refreshToken,
+            },
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
 async function generateHashedPassword(password) {
     const salt = await bcrypt.genSalt(10)
     return await bcrypt.hash(password, salt)
