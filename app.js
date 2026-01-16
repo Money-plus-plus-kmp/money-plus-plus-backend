@@ -14,7 +14,7 @@ app.use('/api/v1/auth/', authRouter)
 app.use('/api/v1/stats/', statisticsRouter);
 app.use(errorMiddleware)
 
-if (process.env.NODE_ENV !== 'development') {
+if (process.env.NODE_ENV === 'development') {
     app.listen(PORT, async () => {
         console.log(`App listening on http://localhost:${PORT}`);
         await connectToDatabase();
