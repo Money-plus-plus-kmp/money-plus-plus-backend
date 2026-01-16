@@ -1,32 +1,48 @@
-import mongoose from "mongoose";
+import mongoose from "../database/mongodb.js";
 
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
-        required: [true, 'User Name is required'],
-        trim: true,
-        min: 4,
-        max: 64,
+        required: [true, 'Name is required'],
     },
     email: {
         type: String,
         required: [true, 'Email is required'],
-        unique: [true, 'User Email must be unique'],
+        unique: true,
         trim: true,
         lowercase: true,
-        min: 8,
-        max: 255,
-        match: [/\S+@\S+\.\S+/, 'Please enter a valid email address.']
+        match: [/^\S+@\S+\.\S+$/, "Please fill a valid email address"],
     },
     password: {
         type: String,
         required: [true, 'Password is required'],
-        trim: true,
-        min: 8,
-        max: 32
-    }
-}, {timestamps: true});
+        minlength: [8, 'Password must be at least 8 characters long'],
+        select: false
+    },
+    currencyId: {
+        type: Number,
+    },
+    salary: {
+        type: Number,
+        default: 0
+    },
+    salaryDay: {
+        type: Number,
+        min: 1,
+        max: 31
+    },
+    currentBalance: {
+        type: Number,
+        default: 0
+    },
+    categories: {
+        type: [String],
+        default: []
+    },
+}, {
+    timestamps: true
+});
 
-const user = mongoose.model('User', userSchema);
+const User = mongoose.model('User', userSchema);
 
-export default user;
+export default User;

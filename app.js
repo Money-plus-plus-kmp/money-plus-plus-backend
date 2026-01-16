@@ -1,6 +1,6 @@
 import express from 'express';
 import {PORT} from './config/env.js';
-import connectToDatabase from "./database/mongodb.js";
+import {connectToDatabase} from "./database/mongodb.js";
 import authRouter from './routes/auth.route.js';
 import errorMiddleware from './middlewares/error.middleware.js';
 import statisticsRouter from './routes/statistics.routes.js';
@@ -14,10 +14,13 @@ app.use('/api/v1/auth/', authRouter)
 app.use('/api/v1/stats/', statisticsRouter);
 app.use(errorMiddleware)
 
-app.listen(PORT, async () => {
-    console.log(`App listening on http://localhost:${PORT}`);
-
+if (process.env.NODE_ENV !== 'development') {
+    app.listen(PORT, async () => {
+        console.log(`App listening on http://localhost:${PORT}`);
+        await connectToDatabase();
+    })
+} else {
     await connectToDatabase();
-})
+}
 
 export default app;
