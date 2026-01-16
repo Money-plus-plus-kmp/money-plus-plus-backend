@@ -70,6 +70,7 @@ export const signUp = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
     try {
+        await connectToDatabase();
         if (!req.body) throwError(400, 'Should provide login data')
 
         const { email, password } = req.body
