@@ -1,18 +1,33 @@
-import mongoose from 'mongoose';
-import {DB_URI, NODE_ENV} from "../config/env.js";
+import mongoose from "mongoose";
+import { DB_URI, NODE_ENV } from "../config/env.js";
 
-if(!DB_URI) {
-    throw new Error('Define MONGODB_URI environment variable inside .env<development/production>.local');
+if (!DB_URI) {
+    throw new Error("Define MONGODB_URI environment variable");
+}
+
+let cached = global.mongoose;
+
+if (!cached) {
+    cached = global.mongoose = {
+        conn: null,
+        promise: null,
+    };
 }
 
 const connectToDatabase = async () => {
-    try {
-        await mongoose.connect(DB_URI);
-        console.log(`MongoDB Connected to MongoDB in ${NODE_ENV}.`);
-    } catch (e) {
-        console.error('Error connecting to database', e);
-        process.exit(1);
+    if (cached.conn) {
+        return cached.conn;
     }
+
+    if (!cached.promise) {
+        cached.promise = mongoose.connect(DB_URI, {
+            bufferCommands: false,
+        });
+    }
+
+    cached.conn = await cached.promise;
+    console.log(`MongoDB connected (${NODE_ENV})`);
+    return cached.conn;
 };
 
 export default connectToDatabase;
