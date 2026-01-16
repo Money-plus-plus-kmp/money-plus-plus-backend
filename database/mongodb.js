@@ -2,19 +2,19 @@ import mongoose from "mongoose";
 import { DB_URI, NODE_ENV } from "../config/env.js";
 
 if (!DB_URI) {
-    throw new Error("Define MONGODB_URI environment variable");
+    throw new Error("MONGODB_URI not defined");
 }
 
-let cached = global.mongoose;
+let cached = global.__mongoose__;
 
 if (!cached) {
-    cached = global.mongoose = {
+    cached = global.__mongoose__ = {
         conn: null,
         promise: null,
     };
 }
 
-const connectToDatabase = async () => {
+export async function connectToDatabase () {
     if (cached.conn) {
         return cached.conn;
     }
@@ -28,6 +28,6 @@ const connectToDatabase = async () => {
     cached.conn = await cached.promise;
     console.log(`MongoDB connected (${NODE_ENV})`);
     return cached.conn;
-};
+}
 
-export default connectToDatabase;
+export default mongoose;

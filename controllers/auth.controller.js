@@ -2,9 +2,11 @@ import User from "../models/user.model.js"
 import bcrypt from "bcryptjs"
 import {throwError} from "../utils/errorHandle.js"
 import {createTokens, saveRefreshToken} from "./token.controller.js"
+import {connectToDatabase} from "../database/mongodb.js";
 
 export const signUp = async (req, res, next) => {
     try {
+        await connectToDatabase();
         const {
             name,
             email,
