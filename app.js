@@ -1,23 +1,18 @@
 import express from 'express';
-import {PORT, NODE_ENV} from './config/env.js';
+import {PORT} from './config/env.js';
 import connectToDatabase from "./database/mongodb.js";
-import swaggerUi from 'swagger-ui-express';
-import { createRequire } from 'module';
+import authRouter from './routes/auth.route.js';
+import errorMiddleware from './middlewares/error.middleware.js';
 import statisticsRouter from './routes/statistics.routes.js';
-
-const require = createRequire(import.meta.url);
-const swaggerFile = require('./swagger-output.json');
 
 const app = express();
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }))
 
-app.get('/', (req, res) => {
-    res.send(`Welcome To 💵💵++ Backend Server on ${NODE_ENV} environment `)
-});
-
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
-app.use('/api/stats', statisticsRouter);
+app.use('/api/v1/auth/', authRouter)
+app.use('/api/v1/stats/', statisticsRouter);
+app.use(errorMiddleware)
 
 app.listen(PORT, async () => {
     console.log(`App listening on http://localhost:${PORT}`);

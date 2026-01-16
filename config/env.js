@@ -7,7 +7,8 @@ export const {
     NODE_ENV,
     DB_URI,
     JWT_SECRET,
+    JWT_ACCESS_SECRET,
+    JWT_REFRESH_SECRET,
     JWT_EXPIRES_IN,
-    API_HOST,
-    API_SCHEME
+    JWT_REFRESH_EXPIRES_IN
 } = process.env;
