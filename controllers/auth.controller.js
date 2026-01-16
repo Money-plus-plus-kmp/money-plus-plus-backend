@@ -1,10 +1,11 @@
 import mongoose from "mongoose"
 import User from "../models/user.model.js"
 import bcrypt from "bcryptjs"
-import { throwError } from "../utils/errorHandle.js"
-import { createTokens, saveRefreshToken } from "./token.controller.js"
+import {throwError} from "../utils/errorHandle.js"
+import {createTokens, saveRefreshToken} from "./token.controller.js"
 
 export const signUp = async (req, res, next) => {
+    console.log(req.body);
     if (!req.body) throwError(400, 'Should provide user data')
     const session = await mongoose.startSession()
     session.startTransaction()
@@ -42,6 +43,8 @@ export const signUp = async (req, res, next) => {
             categories: categories,
         }], { session })
 
+        console.log(newUser);
+
         const { accessToken, refreshToken } = await createTokens(newUser._id)
         await saveRefreshToken(newUser._id, refreshToken, session)
 
@@ -69,6 +72,5 @@ export const signUp = async (req, res, next) => {
 
 async function generateHashedPassword(password) {
     const salt = await bcrypt.genSalt(10)
-    const hashedPassword = await bcrypt.hash(password, salt)
-    return hashedPassword
+    return await bcrypt.hash(password, salt)
 }
