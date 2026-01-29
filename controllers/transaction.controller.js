@@ -12,7 +12,7 @@ export const addTransaction= async(req ,res ,  next)=>{
         const currentUser = await User.findById(userId);
         if (!currentUser) throwError(404, "User not found");
 
-        (type =="income" ) ? currentUser.salary+=amount : currentUser.salary-=amount
+        (type =="income" ) ? currentUser.currentBalance+=amount : currentUser.currentBalance-=amount
         if (currentUser.balance < 0) {
             throwError(400, "Insufficient balance")
         }
