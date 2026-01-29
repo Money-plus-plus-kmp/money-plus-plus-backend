@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-export const transactionSchema = new mongoose.Schema({
+const transactionSchema = new mongoose.Schema({
     userId:{
         type:mongoose.Schema.Types.ObjectId,
         ref:'User',
@@ -40,3 +40,6 @@ export const transactionSchema = new mongoose.Schema({
     }
 
 },{timestamps:true})
+const Transaction = mongoose.model('Transaction', transactionSchemaSchema);
+
+export default Transaction;
