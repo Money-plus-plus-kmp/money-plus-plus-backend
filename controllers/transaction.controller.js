@@ -1,3 +1,5 @@
+import Transaction from "../models/transaction.model";
+
 export const addTransaction= async(req ,res ,  next)=>{
 
     try{
@@ -10,7 +12,7 @@ export const addTransaction= async(req ,res ,  next)=>{
         if (currentUser.balance < 0) {
             throwError(400, "Insufficient balance")
         }
-        const transaction = await Trnasaction.create({
+        const transaction = await Transaction.create({
             userId : currentUser._id,
             type,
             amount,
