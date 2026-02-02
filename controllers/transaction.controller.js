@@ -9,8 +9,8 @@ export const addTransaction= async(req ,res ,  next)=>{
             throwError(400, "Amount must be greater than zero")
         }
 
-        const currentUser = await User.findById(userId);
-        if (!currentUser) throwError(404, "User not found");
+        const currentUser = req.user
+        if (!currentUser) throwError(401, "User not found");
 
         (type =="income" ) ? currentUser.currentBalance+=amount : currentUser.currentBalance-=amount
         if (currentUser.balance < 0) {
@@ -21,7 +21,6 @@ export const addTransaction= async(req ,res ,  next)=>{
             type,
             amount,
             category ,
-            currency,
             date,
             note,
 

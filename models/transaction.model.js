@@ -19,10 +19,6 @@ const transactionSchema = new mongoose.Schema({
         required:[true,'Amount is Required']
 
     },
-    currency:{
-        type:String,
-        default : "IQD"
-    },
     note:{
          type:String
 
