@@ -31,10 +31,6 @@ const userSchema = new mongoose.Schema({
         min: 1,
         max: 31
     },
-    currentBalance: {
-        type: Number,
-        default: 0
-    },
     categories: {
         type: [String],
         default: []
