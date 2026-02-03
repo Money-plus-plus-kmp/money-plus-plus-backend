@@ -14,7 +14,6 @@ export const signUp = async (req, res, next) => {
             currencyId,
             salary,
             salaryDay,
-            currentBalance,
             categories,
         } = req.body || {};
 
@@ -44,7 +43,6 @@ export const signUp = async (req, res, next) => {
             currencyId,
             salary,
             salaryDay,
-            currentBalance,
             categories,
         });
 
