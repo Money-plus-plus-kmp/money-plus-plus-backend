@@ -20,7 +20,6 @@ export const addTransaction = async (req, res, next) => {
 
         })
         const currentBalance = await calculateBalance(currentUser._id);
-        console.log("Current Balance:", currentBalance);
         if (type === "expense" && currentBalance < amount) {
             throwError(400, "Insufficient balance");
         }
