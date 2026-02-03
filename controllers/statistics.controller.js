@@ -21,19 +21,24 @@ export const getMonthlyOverview = async (req, res, next) => {
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0, 23, 59, 59, 999);
 
-        const [incomeAgg, expenseAgg] = await Promise.all([
-            Transaction.aggregate([
-                { $match: { userId: user._id, type: "income", date: { $gte: firstDay, $lte: lastDay } } },
-                { $group: { _id: null, total: { $sum: "$amount" } } }
-            ]),
-            Transaction.aggregate([
-                { $match: { userId: user._id, type: "expense", date: { $gte: firstDay, $lte: lastDay } } },
-                { $group: { _id: null, total: { $sum: "$amount" } } }
-            ])
+
+        const overviewAgg = await Transaction.aggregate([
+            { $match: { userId: user._id, date: { $gte: firstDay, $lte: lastDay } } },
+            {
+                $group: {
+                    _id: null,
+                    total_income: {
+                        $sum: { $cond: [{ $eq: ["$type", "income"] }, "$amount", 0] }
+                    },
+                    total_expenses: {
+                        $sum: { $cond: [{ $eq: ["$type", "expense"] }, "$amount", 0] }
+                    }
+                }
+            }
         ]);
 
-        const total_income = incomeAgg[0]?.total || 0;
-        const total_expenses = expenseAgg[0]?.total || 0;
+        const total_income = overviewAgg[0]?.total_income || 0;
+        const total_expenses = overviewAgg[0]?.total_expenses || 0;
         const saved = total_income - total_expenses;
 
         res.json({
