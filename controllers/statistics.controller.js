@@ -1,11 +1,12 @@
-import {throwError} from "../utils/errorHandle.js";
+
+import { throwError } from "../utils/errorHandle.js";
+import Transaction from "../models/transaction.model.js";
 
 const currency = 'IQD';
 
-export const getMonthlyOverview = (req, res, next) => {
+export const getMonthlyOverview = async (req, res, next) => {
     try {
         const user = req.user;
-
         if (!user) throwError(401, 'User not found. Authorization denied.');
 
         const { date } = req.query;
@@ -14,14 +15,34 @@ export const getMonthlyOverview = (req, res, next) => {
         const parsed = new Date(date);
         if (isNaN(parsed.getTime())) throwError(400, "Invalid 'date' query parameter");
 
-        // TODO: Replace with actual user data
+        const year = parsed.getFullYear();
+        const month = parsed.getMonth();
+
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0, 23, 59, 59, 999);
+
+        const [incomeAgg, expenseAgg] = await Promise.all([
+            Transaction.aggregate([
+                { $match: { userId: user._id, type: "income", date: { $gte: firstDay, $lte: lastDay } } },
+                { $group: { _id: null, total: { $sum: "$amount" } } }
+            ]),
+            Transaction.aggregate([
+                { $match: { userId: user._id, type: "expense", date: { $gte: firstDay, $lte: lastDay } } },
+                { $group: { _id: null, total: { $sum: "$amount" } } }
+            ])
+        ]);
+
+        const total_income = incomeAgg[0]?.total || 0;
+        const total_expenses = expenseAgg[0]?.total || 0;
+        const saved = total_income - total_expenses;
+
         res.json({
             code: 200,
             message: "Monthly overview fetched successfully",
             data: {
-                total_income: 1500000,
-                total_expenses: 950000,
-                saved: 650000,
+                total_income,
+                total_expenses,
+                saved,
                 currency: currency,
             }
         });
