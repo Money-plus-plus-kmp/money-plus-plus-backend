@@ -51,10 +51,9 @@ export const getMonthlyOverview = async (req, res, next) => {
     }
 };
 
-export const getSpendingTrend = (req, res, next) => {
+export const getSpendingTrend = async (req, res, next) => {
     try {
         const user = req.user;
-
         if (!user) throwError(401, 'User not found. Authorization denied.');
 
         const { date } = req.query;
@@ -63,33 +62,80 @@ export const getSpendingTrend = (req, res, next) => {
         const baseDate = new Date(date);
         if (isNaN(baseDate.getTime())) throwError(400, "Invalid 'date' query parameter");
 
-        // TODO: Replace with actual user data from database
-        const spending = Array.from({ length: 30 }, (_, index) => {
-            const day = new Date(baseDate);
-            day.setDate(baseDate.getDate() - (29 - index));
-            const base = 5_000;
-            const dayNum = index + 1;
-            const variability = ((dayNum * 1_350) % 12_000) + ((dayNum % 3) * 2_000);
-            const spend = base + variability;
-            const income = base + ((dayNum * 900) % 10_000);
+        const year = baseDate.getFullYear();
+        const month = baseDate.getMonth();
 
-            return {
-                day: day,
-                spend: spend,
-                income: income
-            };
-        });
+        const startDate = new Date(year, month, 1);
+        const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
 
-        const highestSpend = spending.reduce((max, entry) => (entry.spend > max.spend ? entry : max), spending[0]);
-        const highestIncome = spending.reduce((max, entry) => (entry.income > max.income ? entry : max), spending[0]);
+        const agg = await Transaction.aggregate([
+            { $match: {
+                userId: user._id,
+                date: { $gte: startDate, $lte: endDate }
+            }},
+            {
+                $group: {
+                    _id: {
+                        $dateToString: { format: "%Y-%m-%d", date: "$date" }
+                    },
+                    spend: {
+                        $sum: {
+                            $cond: [ { $eq: [ "$type", "expense" ] }, "$amount", 0 ]
+                        }
+                    },
+                    income: {
+                        $sum: {
+                            $cond: [ { $eq: [ "$type", "income" ] }, "$amount", 0 ]
+                        }
+                    }
+                }
+            },
+            { $sort: { _id: 1 } },
+            {
+                $group: {
+                    _id: null,
+                    spending: { $push: { day: "$_id", spend: "$spend", income: "$income" } },
+                    highestSpend: { $max: "$spend" },
+                    highestIncome: { $max: "$income" },
+                }
+            },
+            {
+                $project: {
+                    spending: 1,
+                    highest_spending_day: {
+                        $first: {
+                            $filter: {
+                                input: "$spending",
+                                as: "item",
+                                cond: { $eq: [ "$$item.spend", "$highestSpend" ] }
+                            }
+                        }
+                    },
+                    highest_income_day: {
+                        $first: {
+                            $filter: {
+                                input: "$spending",
+                                as: "item",
+                                cond: { $eq: [ "$$item.income", "$highestIncome" ] }
+                            }
+                        }
+                    }
+                }
+            }
+        ]);
+
+        const result = agg[0] || {};
+        const spending = result.spending || [];
+        const highestSpend = result.highest_spending_day || null;
+        const highestIncome = result.highest_income_day || null;
 
         res.json({
             code: 200,
             message: "Spending trend fetched successfully",
             date: {
                 currency: currency,
-                highest_spending_day: highestSpend.day,
-                highest_income_day: highestIncome.day,
+                highest_spending_day: highestSpend ? highestSpend.day : null,
+                highest_income_day: highestIncome ? highestIncome.day : null,
                 spending: spending,
             }
         });
