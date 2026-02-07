@@ -116,6 +116,7 @@ export const login = async (req, res, next) => {
 
 export const forgotPassword = async (req, res, next) => {
   try {
+    await connectToDatabase();
     const { email } = req.body;
     if (!email) throwError(400, "Email is required");
 
@@ -159,6 +160,7 @@ export const forgotPassword = async (req, res, next) => {
 
 export const resetPassword = async (req, res, next) => {
   try {
+    await connectToDatabase();
     const { token, newPassword } = req.body;
     if (!token || !newPassword) throwError(400, "Token and new password are required");
 
