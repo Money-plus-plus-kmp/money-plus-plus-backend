@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs"
 import {throwError} from "../utils/errorHandle.js"
 import {createTokens, saveRefreshToken} from "./token.controller.js"
 import {connectToDatabase} from "../database/mongodb.js";
+import Currency from "../models/currency.model.js";
 import { JWT_PASSWORD_RESET_SECRET, PASSWORD_RESET_EXPIRES_IN, FRONTEND_URL } from "../config/env.js";
 import { sendEmail } from "../utils/email.js";
 
@@ -36,13 +37,18 @@ export const signUp = async (req, res, next) => {
             throwError(409, "Email already used by another account");
         }
 
+        const currency = await Currency.findById(currencyId);
+        if (!currency) {
+            throwError(400, "Invalid currency id");
+        }
+
         const hashedPassword = await generateHashedPassword(password);
 
         const newUser = await User.create({
             name,
             email,
             password: hashedPassword,
-            currencyId,
+            currency: currency._id,
             salary,
             salaryDay,
             categories,
@@ -110,6 +116,7 @@ export const login = async (req, res, next) => {
 
 export const forgotPassword = async (req, res, next) => {
   try {
+    await connectToDatabase();
     const { email } = req.body;
     if (!email) throwError(400, "Email is required");
 
@@ -153,6 +160,7 @@ export const forgotPassword = async (req, res, next) => {
 
 export const resetPassword = async (req, res, next) => {
   try {
+    await connectToDatabase();
     const { token, newPassword } = req.body;
     if (!token || !newPassword) throwError(400, "Token and new password are required");
 

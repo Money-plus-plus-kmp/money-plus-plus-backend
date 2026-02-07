@@ -19,8 +19,10 @@ const userSchema = new mongoose.Schema({
         minlength: [8, 'Password must be at least 8 characters long'],
         select: false
     },
-    currencyId: {
-        type: Number,
+    currency: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Currency",
+      required: true,
     },
     salary: {
         type: Number,
@@ -38,7 +40,10 @@ const userSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
-
+userSchema.pre(/^find/, function (next) {
+  this.populate("currency", "name code");
+  next();
+});
 const User = mongoose.model('User', userSchema);
 
 export default User;
