@@ -4,6 +4,7 @@ import {connectToDatabase} from "./database/mongodb.js";
 import authRouter from './routes/auth.route.js';
 import errorMiddleware from './middlewares/error.middleware.js';
 import transactionRouter from './routes/transaction.route.js';
+import currencyRouter from "./routes/currency.route.js";
 
 const app = express();
 
@@ -12,6 +13,7 @@ app.use(express.urlencoded({ extended: true }))
 
 app.use('/api/v1/auth/', authRouter)
 app.use('/api/v1/transaction/' ,transactionRouter)
+app.use("/api/v1/currencies", currencyRouter)
 
 app.use(errorMiddleware)
 

@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { DB_URI, NODE_ENV } from "../config/env.js";
+import seedCurrencies from "../seed/currencySeed.js";
 
 if (!DB_URI) {
     throw new Error("MONGODB_URI not defined");
@@ -27,6 +28,7 @@ export async function connectToDatabase () {
 
     cached.conn = await cached.promise;
     console.log(`MongoDB connected (${NODE_ENV})`);
+    await seedCurrencies();
     return cached.conn;
 }
 

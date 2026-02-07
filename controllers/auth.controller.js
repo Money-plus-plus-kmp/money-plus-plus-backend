@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs"
 import {throwError} from "../utils/errorHandle.js"
 import {createTokens, saveRefreshToken} from "./token.controller.js"
 import {connectToDatabase} from "../database/mongodb.js";
+import Currency from "../models/currency.model.js";
 
 export const signUp = async (req, res, next) => {
     try {
@@ -34,13 +35,18 @@ export const signUp = async (req, res, next) => {
             throwError(409, "Email already used by another account");
         }
 
+        const currency = await Currency.findOne({ code: currencyCode });
+        if (!currency) {
+            throwError(400, "Invalid currency code");
+        }
+
         const hashedPassword = await generateHashedPassword(password);
 
         const newUser = await User.create({
             name,
             email,
             password: hashedPassword,
-            currencyId,
+            currency: currency._id,
             salary,
             salaryDay,
             categories,
