@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { DB_URI, NODE_ENV } from "../config/env.js";
-import seedCurrencies from "../seed/currencySeed.js";
+import seedCurrencies from "../seed/currency.seed.js";
 
 if (!DB_URI) {
     throw new Error("MONGODB_URI not defined");

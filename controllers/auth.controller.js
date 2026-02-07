@@ -35,9 +35,9 @@ export const signUp = async (req, res, next) => {
             throwError(409, "Email already used by another account");
         }
 
-        const currency = await Currency.findOne({ code: currencyCode });
+        const currency = await Currency.findById(currencyId);
         if (!currency) {
-            throwError(400, "Invalid currency code");
+            throwError(400, "Invalid currency id");
         }
 
         const hashedPassword = await generateHashedPassword(password);
