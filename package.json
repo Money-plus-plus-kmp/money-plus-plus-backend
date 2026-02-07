@@ -19,9 +19,8 @@
     "morgan": "^1.10.1",
     "nodemon": "^3.1.11",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
-    "nodemailer": "^8.0.1",
-    "nodemon": "^3.1.11"
+    "swagger-ui-express": "^5.0.1",
+    "nodemailer": "^8.0.1"
   },
   "devDependencies": {
     "@eslint/css": "^0.14.1",
