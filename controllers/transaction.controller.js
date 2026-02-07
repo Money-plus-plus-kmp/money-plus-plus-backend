@@ -1,8 +1,11 @@
 import Transaction from "../models/transaction.model.js";
 import { throwError } from "../utils/errorHandle.js";
+import {connectToDatabase} from "../database/mongodb.js";
+
 export const addTransaction = async (req, res, next) => {
 
     try {
+        await connectToDatabase();
         const { type, amount, category, date, note } = req.body
         if (!amount || amount <= 0) {
             throwError(400, "Amount must be greater than zero")
@@ -39,6 +42,7 @@ export const addTransaction = async (req, res, next) => {
 };
 export const getTransactionDetailsById = async (req, res, next) => {
     try {
+        await connectToDatabase();
         const { transactionId } = req.params;
         if (!transactionId) throwError(400, "transactionId is required");
 
