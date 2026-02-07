@@ -2,8 +2,6 @@
 import { throwError } from "../utils/errorHandle.js";
 import Transaction from "../models/transaction.model.js";
 
-const currency = 'IQD';
-
 export const getMonthlyOverview = async (req, res, next) => {
     try {
         const user = req.user;
@@ -48,7 +46,7 @@ export const getMonthlyOverview = async (req, res, next) => {
                 total_income,
                 total_expenses,
                 saved,
-                currency: currency,
+                currency: user.currency,
             }
         });
     } catch (error) {
@@ -138,7 +136,7 @@ export const getSpendingTrend = async (req, res, next) => {
             code: 200,
             message: "Spending trend fetched successfully",
             date: {
-                currency: currency,
+                currency: user.currency,
                 highest_spending_day: highestSpend ? highestSpend.day : null,
                 highest_income_day: highestIncome ? highestIncome.day : null,
                 spending: spending,
