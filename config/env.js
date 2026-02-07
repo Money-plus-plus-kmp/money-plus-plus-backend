@@ -4,6 +4,8 @@ config({path: `.env.${process.env.NODE_ENV || 'development'}.local`});
 
 export const {
     PORT,
+    API_URL,
+    API_DESCRIPTION,
     NODE_ENV,
     DB_URI,
     JWT_SECRET,
