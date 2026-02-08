@@ -1,6 +1,7 @@
 
 import { throwError } from "../utils/errorHandle.js";
 import Transaction from "../models/transaction.model.js";
+import { connectToDatabase } from "../database/mongodb.js";
 
 export const getMonthlyOverview = async (req, res, next) => {
     try {
@@ -19,6 +20,7 @@ export const getMonthlyOverview = async (req, res, next) => {
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0, 23, 59, 59, 999);
 
+        await connectToDatabase();
 
         const overviewAgg = await Transaction.aggregate([
             { $match: { userId: user._id, date: { $gte: firstDay, $lte: lastDay } } },
@@ -70,6 +72,8 @@ export const getSpendingTrend = async (req, res, next) => {
 
         const startDate = new Date(year, month, 1);
         const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
+
+        await connectToDatabase();
 
         const agg = await Transaction.aggregate([
             { $match: {

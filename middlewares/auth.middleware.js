@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import { JWT_ACCESS_SECRET } from '../config/env.js';
 import User from '../models/user.model.js';
 import { throwError } from '../utils/errorHandle.js';
+import { connectToDatabase } from '../database/mongodb.js';
 
 export const authenticate = async (req, res, next) => {
     try {
@@ -20,6 +21,8 @@ export const authenticate = async (req, res, next) => {
 
         // Verify token
         const decoded = jwt.verify(token, JWT_ACCESS_SECRET);
+
+        await connectToDatabase();
 
         // Get user from token
         const user = await User.findById(decoded._id);
