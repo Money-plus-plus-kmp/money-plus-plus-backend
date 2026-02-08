@@ -40,9 +40,8 @@ const userSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
-userSchema.pre(/^find/, function (next) {
-  this.populate("currency", "name code");
-  next();
+userSchema.pre(/^find/, async function () {
+    this.populate("currency", "name code");
 });
 const User = mongoose.model('User', userSchema);
 

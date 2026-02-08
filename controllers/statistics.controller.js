@@ -46,7 +46,7 @@ export const getMonthlyOverview = async (req, res, next) => {
                 total_income,
                 total_expenses,
                 saved,
-                currency: user.currency,
+                currency: user.currency?.code || null,
             }
         });
     } catch (error) {
@@ -136,7 +136,7 @@ export const getSpendingTrend = async (req, res, next) => {
             code: 200,
             message: "Spending trend fetched successfully",
             date: {
-                currency: user.currency,
+                currency: user.currency?.code || null,
                 highest_spending_day: highestSpend ? highestSpend.day : null,
                 highest_income_day: highestIncome ? highestIncome.day : null,
                 spending: spending,
