@@ -13,6 +13,12 @@ export const addTransaction = async (req, res, next) => {
 
         const currentUser = req.user
         if (!currentUser) throwError(401, "User not found");
+
+        const currentBalance = await calculateBalance(currentUser._id);
+        if (type === "expense" && currentBalance < amount) {
+            throwError(400, "Insufficient balance");
+        }
+
         const transaction = await Transaction.create({
             userId: currentUser._id,
             type,
@@ -22,11 +28,6 @@ export const addTransaction = async (req, res, next) => {
             note,
 
         })
-        const currentBalance = await calculateBalance(currentUser._id);
-        console.log("Current Balance:", currentBalance);
-        if (type === "expense" && currentBalance < amount) {
-            throwError(400, "Insufficient balance");
-        }
 
         res.status(201).json({
             code: 201,

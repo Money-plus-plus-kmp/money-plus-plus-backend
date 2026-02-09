@@ -8,6 +8,7 @@ import currencyRouter from "./routes/currency.route.js";
 import userRouter from './routes/user.route.js';
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./docs/swagger.js";
+import statisticsRouter from './routes/statistics.routes.js';
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use('/api/v1/auth/', authRouter)
 app.use('/api/v1/transaction/' ,transactionRouter)
 app.use("/api/v1/currencies", currencyRouter)
 app.use("/api/v1/me", userRouter)
+app.use('/api/v1/stats/', statisticsRouter);
 
 app.use(errorMiddleware)
 
