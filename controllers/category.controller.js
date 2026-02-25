@@ -22,3 +22,20 @@ export const addCategory= async(req , res , next)=>
     }
 
 };
+export const getCategories = async(req , res , next )=>
+{
+    try{
+        const categories = await Category.find({});
+        if (!categories || categories.length == 0 ) throwError(404, "No Categories found");
+                res.status(200).json({
+                    code: 200,
+                    message: "Categories Fetched successfully",
+                    data: categories
+                });
+
+    }
+    catch(error)
+    {
+        next(error);
+    }
+};
