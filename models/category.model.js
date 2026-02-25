@@ -12,6 +12,6 @@ const categorySchema = new mongoose.Schema({
         required: [true],
     }
 },{ timestamps: true })
-const Transaction = mongoose.model('Transaction', transactionSchema);
+const Category = mongoose.model('Category', categorySchema);
 
 export default Category;

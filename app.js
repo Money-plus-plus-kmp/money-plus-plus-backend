@@ -7,7 +7,6 @@ import transactionRouter from './routes/transaction.route.js';
 import currencyRouter from "./routes/currency.route.js";
 import userRouter from './routes/user.route.js';
 import swaggerUi from "swagger-ui-express";
-i
 import { swaggerSpec } from "./docs/swagger.js";
 import statisticsRouter from './routes/statistics.routes.js';
 import categoryRouter from './routes/category.route.js';

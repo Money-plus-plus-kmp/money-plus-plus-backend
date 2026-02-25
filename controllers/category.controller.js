@@ -1,9 +1,8 @@
 import Category from "../models/category.model.js";
 import { throwError } from "../utils/errorHandle.js";
-export const saveCategory = async(req , res , next)=>
+export const addCategory= async(req , res , next)=>
 {
     try{
-       await connectToDatabase();
        const {name} = req.body
        const currentUser = req.user
        if (!currentUser) throwError(401, "User not found");
@@ -22,4 +21,4 @@ export const saveCategory = async(req , res , next)=>
         next(error);
     }
 
-}
+};
