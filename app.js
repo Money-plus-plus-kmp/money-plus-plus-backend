@@ -1,6 +1,6 @@
 import express from 'express';
-import {PORT} from './config/env.js';
-import {connectToDatabase} from "./database/mongodb.js";
+import { PORT } from './config/env.js';
+import { connectToDatabase } from "./database/mongodb.js";
 import authRouter from './routes/auth.route.js';
 import errorMiddleware from './middlewares/error.middleware.js';
 import transactionRouter from './routes/transaction.route.js';
@@ -19,11 +19,11 @@ app.use(express.urlencoded({ extended: true }))
 app.use("/api/v1/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use('/api/v1/auth/', authRouter)
-app.use('/api/v1/transaction/' ,transactionRouter)
+app.use('/api/v1/transaction/', transactionRouter)
 app.use("/api/v1/currencies", currencyRouter)
 app.use("/api/v1/me", userRouter)
-app.use('/api/v1/stats/', statisticsRouter);
-app.use('/api/v1/category/' ,categoryRouter)
+app.use('/api/v1/stats/', statisticsRouter)
+app.use('/api/v1/category/', categoryRouter)
 
 app.use(errorMiddleware)
 
