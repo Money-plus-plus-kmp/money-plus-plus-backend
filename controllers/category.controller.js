@@ -1,5 +1,4 @@
 import Category from "../models/category.model.js";
-import Transaction from "../models/transaction.model.js";
 import { throwError } from "../utils/errorHandle.js";
 export const addCategory = async (req, res, next) => {
     try {
@@ -39,62 +38,3 @@ export const getCategories = async (req, res, next) => {
         next(error);
     }
 };
-export const getCategoryBreakDown = async (req, res, next) => {
-    try {
-        const currentUser = req.user
-        const { month, year } = req.body
-        const startDate = new Date(year, month - 1, 1)
-        const endDate = new Date(year, month, 1)
-        const result = await Transaction.aggregate(
-            [
-                {
-                    $match: {
-                        userId: currentUser._id,
-                        type: "expense",
-                        date: { $gte: startDate, $lt: endDate }
-
-                    }
-                },
-                {
-                    $group: {
-                        _id: "$category",
-                        total_spend: { $sum: "$amount" },
-                    }
-                }
-            ]
-        );
-        const totalExpenses = result.reduce((sum, item) =>
-            sum += item.total_spend, 0
-        );
-        const categories = result.map(item => ({
-            categoryId: item._id,
-            total_spend: item.total_spend,
-            percentage: totalExpenses
-                ? (item.total_spend / totalExpenses).toFixed(2)
-                : "0.00"
-        }));
-        categories.sort((a, b) => parseFloat(b.percentage) - parseFloat(a.percentage));
-        const topCategories = categories.slice(0, 4);
-        const otherCategories = categories.slice(4);
-        if (otherCategories.length >= 1) {
-            const otherTotalSpend = otherCategories.reduce((sum, item) => sum += item.total_spend, 0);
-            const otherTotalPrecentage = otherCategories.reduce((sum, item) => sum + parseFloat(item.percentage), 0).toFixed(2);
-            topCategories.push({
-                name: "Other",
-                total_spend: otherTotalSpend,
-                percentage: otherTotalPrecentage
-            });
-        }
-        res.status(200).json({
-            total_expenses: totalExpenses,
-            currency: currentUser.currency,
-            categories: topCategories
-        });
-
-
-    }
-    catch (error) {
-        next(error);
-    }
-
-}
