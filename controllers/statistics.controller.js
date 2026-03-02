@@ -76,10 +76,12 @@ export const getSpendingTrend = async (req, res, next) => {
         await connectToDatabase();
 
         const agg = await Transaction.aggregate([
-            { $match: {
-                userId: user._id,
-                date: { $gte: startDate, $lte: endDate }
-            }},
+            {
+                $match: {
+                    userId: user._id,
+                    date: { $gte: startDate, $lte: endDate }
+                }
+            },
             {
                 $group: {
                     _id: {
@@ -87,12 +89,12 @@ export const getSpendingTrend = async (req, res, next) => {
                     },
                     spend: {
                         $sum: {
-                            $cond: [ { $eq: [ "$type", "expense" ] }, "$amount", 0 ]
+                            $cond: [{ $eq: ["$type", "expense"] }, "$amount", 0]
                         }
                     },
                     income: {
                         $sum: {
-                            $cond: [ { $eq: [ "$type", "income" ] }, "$amount", 0 ]
+                            $cond: [{ $eq: ["$type", "income"] }, "$amount", 0]
                         }
                     }
                 }
@@ -114,7 +116,7 @@ export const getSpendingTrend = async (req, res, next) => {
                             $filter: {
                                 input: "$spending",
                                 as: "item",
-                                cond: { $eq: [ "$$item.spend", "$highestSpend" ] }
+                                cond: { $eq: ["$$item.spend", "$highestSpend"] }
                             }
                         }
                     },
@@ -123,7 +125,7 @@ export const getSpendingTrend = async (req, res, next) => {
                             $filter: {
                                 input: "$spending",
                                 as: "item",
-                                cond: { $eq: [ "$$item.income", "$highestIncome" ] }
+                                cond: { $eq: ["$$item.income", "$highestIncome"] }
                             }
                         }
                     }
@@ -154,58 +156,109 @@ export const getCategoryBreakDown = async (req, res, next) => {
     try {
         const currentUser = req.user
         const { month, year } = req.body
+
         const startDate = new Date(year, month - 1, 1)
         const endDate = new Date(year, month, 1)
-        const result = await Transaction.aggregate(
-            [
-                {
-                    $match: {
-                        userId: currentUser._id,
-                        type: "expense",
-                        date: { $gte: startDate, $lt: endDate }
 
-                    }
-                },
-                {
-                    $group: {
-                        _id: "$category",
-                        total_spend: { $sum: "$amount" },
+        const result = await Transaction.aggregate([
+            {
+                $match: {
+                    userId: currentUser._id,
+                    type: "expense",
+                    date: { $gte: startDate, $lt: endDate }
+                }
+            },
+            {
+                $group: {
+                    _id: "$category",
+                    total_spend: { $sum: "$amount" }
+                }
+            },
+            {
+                $sort: { total_spend: -1 }
+            },
+            {
+                $group: {
+                    _id: null,
+                    total_expenses: { $sum: "$total_spend" },
+                    categories: { $push: "$$ROOT" }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    total_expenses: 1,
+                    topCategories: { $slice: ["$categories", 4] },
+                    otherCategories: { $slice: ["$categories", 4, { $size: "$categories" }] }
+                }
+            },
+            {
+                $project: {
+                    total_expenses: 1,
+                    categories: {
+                        $concatArrays: [
+                            {
+                                $map: {
+                                    input: "$topCategories",
+                                    as: "cat",
+                                    in: {
+                                        categoryId: "$$cat._id",
+                                        total_spend: "$$cat.total_spend",
+                                        percentage: {
+                                            $cond: [
+                                                { $eq: ["$total_expenses", 0] },
+                                                "0.00",
+                                                {
+                                                    $toString: {
+                                                        $round: [
+                                                            { $divide: ["$$cat.total_spend", "$total_expenses"] },
+                                                            2
+                                                        ]
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                $cond: [
+                                    { $gt: [{ $size: "$otherCategories" }, 0] },
+                                    [{
+                                        name: "Other",
+                                        total_spend: {
+                                            $sum: "$otherCategories.total_spend"
+                                        },
+                                        percentage: {
+                                            $toString: {
+                                                $round: [
+                                                    {
+                                                        $divide: [
+                                                            { $sum: "$otherCategories.total_spend" },
+                                                            "$total_expenses"
+                                                        ]
+                                                    },
+                                                    2
+                                                ]
+                                            }
+                                        }
+                                    }],
+                                    []
+                                ]
+                            }
+                        ]
                     }
                 }
-            ]
-        );
-        const totalExpenses = result.reduce((sum, item) =>
-            sum += item.total_spend, 0
-        );
-        const categories = result.map(item => ({
-            categoryId: item._id,
-            total_spend: item.total_spend,
-            percentage: totalExpenses
-                ? (item.total_spend / totalExpenses).toFixed(2)
-                : "0.00"
-        }));
-        categories.sort((a, b) => parseFloat(b.percentage) - parseFloat(a.percentage));
-        const topCategories = categories.slice(0, 4);
-        const otherCategories = categories.slice(4);
-        if (otherCategories.length >= 1) {
-            const otherTotalSpend = otherCategories.reduce((sum, item) => sum += item.total_spend, 0);
-            const otherTotalPrecentage = otherCategories.reduce((sum, item) => sum + parseFloat(item.percentage), 0).toFixed(2);
-            topCategories.push({
-                name: "Other",
-                total_spend: otherTotalSpend,
-                percentage: otherTotalPrecentage
-            });
-        }
+            }
+        ])
+
         res.status(200).json({
-            total_expenses: totalExpenses,
+            total_expenses: result[0]?.total_expenses || 0,
             currency: currentUser.currency,
-            categories: topCategories
-        });
+            categories: result[0]?.categories || []
+        })
 
-
+    } catch (error) {
+        next(error)
     }
-    catch (error) {
-        next(error);
-    }
-
 };
