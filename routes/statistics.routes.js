@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import {
+    getCategoryBreakDown,
     getMonthlyOverview,
     getSpendingTrend
 } from '../controllers/statistics.controller.js';
@@ -116,5 +117,6 @@ router.get('/monthly-overview', authenticate, getMonthlyOverview);
  *                             example: 500
  */
 router.get('/spending-trend', authenticate, getSpendingTrend);
+router.get('/get-category-breakdown' , authenticate ,getCategoryBreakDown)
 
 export default router;
